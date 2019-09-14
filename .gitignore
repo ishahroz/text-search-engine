@@ -1,3 +1,4 @@
 corpus
 stoplist.txt
-.idea
+.*
+!/.gitignore
