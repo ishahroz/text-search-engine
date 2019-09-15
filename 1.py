@@ -1,6 +1,7 @@
 import sys
 import os
 import re
+import string
 from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -33,6 +34,14 @@ def parseText(dirName, fileName):
     return text.lower()
 
 
+def removePunctuations(completeList):
+    returnList = []
+    for i in range(len(words)):
+        if words[i] not in string.punctuation:
+            returnList.append(words[i])
+    return returnList
+
+
 def applyStop(stopList, parsedList):
     return [w for w in parsedList if not w in stopList]
 
@@ -45,10 +54,22 @@ def stemText(tokenizedList):
     return stem_sentence
 
 
-if __name__ == "__main__":
+def writeFiles(list1, list2):
 
-    docIDFile = open("docids.txt", "w+")
-    termIDFile = open("termids.txt", "w+")
+    docIDFile = open("docids.txt", "w+", encoding="utf-8")
+    termIDFile = open("termids.txt", "w+", encoding="utf-8")
+
+    for key in list1:
+        termIDFile.write(str(list1[key]) + "\t" + key + "\n")
+
+    for key in list2:
+        docIDFile.write(str(key) + "\t" + list2[key] + "\n")
+
+    docIDFile.close()
+    termIDFile.close()
+
+
+if __name__ == "__main__":
 
     # DOCS-IDs DICTIONARY
     docsIDs = {}
@@ -58,8 +79,8 @@ if __name__ == "__main__":
     termsIDs = {}
     termCounter = 0
 
-    # MAIN INDEX
-    mainIndex = []
+    # MAIN INDEX (Dictionary)
+    invertedIndex = {}
 
     # READING STOP-LIST
     lineList = [line.rstrip('\n') for line in open('stoplist.txt')]
@@ -80,25 +101,24 @@ if __name__ == "__main__":
         except:
             continue
 
-        filteredSentence = re.sub(r'[^\w\s]', '', parsedText)                   # REMOVING PUNCTUATIONS
-        words = word_tokenize(filteredSentence)                                 # TOKENIZING WORDS (LOWER-CASE)
-        filteredWords = applyStop(lineList, words)                              # REMOVE STOP WORDS
-        stemmedText = stemText(filteredWords)                                   # STEMMING WORDS
+        regex = re.compile('[%s]' % re.escape(string.punctuation))          # REMOVING PUNCTUATIONS
+        text = regex.sub(' ', parsedText)
+        words = word_tokenize(text)                                         # TOKENIZING WORDS (LOWER-CASE)
+        filteredWords = applyStop(lineList, words)                          # REMOVE STOP WORDS
+        stemmedText = stemText(filteredWords)                               # STEMMING WORDS
 
+        termPositionCounter = 0
         for word in stemmedText:
             if word not in termsIDs:
-                termsIDs[termCounter] = word
-                termIDFile.write(str(termCounter) + "\t" + word + "\n")
+                termsIDs[word] = termCounter
+                # invertedIndex[termCounter] = [1, (docCounter, termPositionCounter)]
                 termCounter = termCounter + 1
-                # mainIndex.append((docCounter, termCounter))
             # else:
             #     for key in termsIDs:
             #         if termsIDs[key] == word:
-            #             mainIndex.append((docCounter, key))
-
-        docIDFile.write(str(docCounter) + "\t" + file + "\n")
+            #             invertedIndex[key][0] = invertedIndex[key][0] + 1
+            #             invertedIndex[key].append((docCounter, termPositionCounter))
+            # termPositionCounter = termPositionCounter + 1
         docCounter = docCounter + 1
 
-    docIDFile.close()
-    termIDFile.close()
-
+    writeFiles(termsIDs, docsIDs)
