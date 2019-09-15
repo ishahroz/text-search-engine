@@ -46,12 +46,50 @@ def applyStop(stopList, parsedList):
     return [w for w in parsedList if not w in stopList]
 
 
+def deltaEncode(invertedList):
+    for key in invertedList:
+        postingList = invertedList[key]
+        for i in range(len(postingList)):
+            if i == 0 or i == 1:
+                continue
+            if i == 2:
+                prevDoc = postingList[i][0]
+                prevPos = postingList[i][1]
+            else:
+                currDoc = postingList[i][0]
+                currPos = postingList[i][1]
+                currPosting = list(postingList[i])
+                currPosting[0] = currDoc - prevDoc
+                if currDoc == prevDoc:
+                    currPosting[1] = currPos - prevPos
+                else:
+                    postingList[1] = postingList[1] + 1
+                    currPosting[1] = currPos
+                postingList[i] = tuple(currPosting)
+                prevDoc = currDoc
+                prevPos = currPos
+
+
 def stemText(tokenizedList):
     porter = PorterStemmer()
     stem_sentence = []
     for word in tokenizedList:
         stem_sentence.append(porter.stem(word))
     return stem_sentence
+
+
+def writeEncodedFile(invertedList):
+    invFile = open("term_index.txt", "w+", encoding="utf-8")
+    for key in invertedList:
+        invFile.write(str(key) + " ")
+        postingList = invertedList[key]
+        for i in range(len(postingList)):
+            if i == 0 or i == 1:
+                invFile.write(str(postingList[i]) + " ")
+            else:
+                invFile.write(str(postingList[i][0]) + "," + str(postingList[i][1]) + " ")
+        invFile.write("\n")
+    invFile.close()
 
 
 def writeFiles(list1, list2):
@@ -111,14 +149,18 @@ if __name__ == "__main__":
         for word in stemmedText:
             if word not in termsIDs:
                 termsIDs[word] = termCounter
-                # invertedIndex[termCounter] = [1, (docCounter, termPositionCounter)]
-                termCounter = termCounter + 1
-            # else:
-            #     for key in termsIDs:
-            #         if termsIDs[key] == word:
-            #             invertedIndex[key][0] = invertedIndex[key][0] + 1
-            #             invertedIndex[key].append((docCounter, termPositionCounter))
-            # termPositionCounter = termPositionCounter + 1
-        docCounter = docCounter + 1
+                invertedIndex[termCounter] = [1, 0, (docCounter, termPositionCounter)]
+                termCounter += 1
+            else:
+                tempList = invertedIndex[termsIDs[word]]
+                tempList[0] += 1
+                tempList.append((docCounter, termPositionCounter))
 
-    writeFiles(termsIDs, docsIDs)
+            termPositionCounter += 1
+        docCounter += 1
+
+    deltaEncode(invertedIndex)
+
+    writeEncodedFile(invertedIndex)
+
+    # writeFiles(termsIDs, docsIDs)
