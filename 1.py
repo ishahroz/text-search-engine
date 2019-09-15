@@ -8,7 +8,7 @@ from nltk.stem import PorterStemmer
 
 def parseText(dirName, fileName):
     # READING FILE
-    soup = BeautifulSoup(open('./' + dirName + '/' + fileName), 'html.parser')
+    soup = BeautifulSoup(open('./' + dirName + '/' + fileName, encoding="utf8", errors='ignore'), 'html.parser')
 
     # REMOVING STYLES and SCRIPTS
     for script in soup(["script", "style"]):
@@ -47,6 +47,20 @@ def stemText(tokenizedList):
 
 if __name__ == "__main__":
 
+    docIDFile = open("docids.txt", "w+")
+    termIDFile = open("termids.txt", "w+")
+
+    # DOCS-IDs DICTIONARY
+    docsIDs = {}
+    docCounter = 0
+
+    # TERM-IDs DICTIONARY
+    termsIDs = {}
+    termCounter = 0
+
+    # MAIN INDEX
+    mainIndex = []
+
     # READING STOP-LIST
     lineList = [line.rstrip('\n') for line in open('stoplist.txt')]
 
@@ -56,9 +70,35 @@ if __name__ == "__main__":
 
     # READING FILES
     for file in corpusFiles:
-        filteredSentence = re.sub(r'[^\w\s]', '', parseText(corpusDirectory, file))     # REMOVING PUNCTUATIONS
-        words = word_tokenize(filteredSentence)                                         # TOKENIZING WORDS (LOWER-CASE)
-        filteredWords = applyStop(lineList, words)                                      # REMOVE STOP WORDS
-        stemmedText = stemText(filteredWords)                                           # STEMMING WORDS
-        print(stemmedText)
-        break
+
+        # ADDING FILE TO DOCS DICTIONARY
+        docsIDs[docCounter] = file
+
+        # PARSING TEXT FROM HTML BODY TAGS
+        try:
+            parsedText = parseText(corpusDirectory, file)
+        except:
+            continue
+
+        filteredSentence = re.sub(r'[^\w\s]', '', parsedText)                   # REMOVING PUNCTUATIONS
+        words = word_tokenize(filteredSentence)                                 # TOKENIZING WORDS (LOWER-CASE)
+        filteredWords = applyStop(lineList, words)                              # REMOVE STOP WORDS
+        stemmedText = stemText(filteredWords)                                   # STEMMING WORDS
+
+        for word in stemmedText:
+            if word not in termsIDs:
+                termsIDs[termCounter] = word
+                termIDFile.write(str(termCounter) + "\t" + word + "\n")
+                termCounter = termCounter + 1
+                # mainIndex.append((docCounter, termCounter))
+            # else:
+            #     for key in termsIDs:
+            #         if termsIDs[key] == word:
+            #             mainIndex.append((docCounter, key))
+
+        docIDFile.write(str(docCounter) + "\t" + file + "\n")
+        docCounter = docCounter + 1
+
+    docIDFile.close()
+    termIDFile.close()
+
