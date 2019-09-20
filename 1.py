@@ -206,33 +206,32 @@ if __name__ == "__main__":
             else:
                 invList.append((termIDss.index(word), docCounter, termPositionCounter))
 
-
             termPositionCounter += 1
 
         docCounter += 1
         if docCounter == 20:
             break
 
-    invList.sort(key=takeFirst)
+    # ======================= INVERTED INDEX WITHOUT HASH MAP ====================
 
-    print(invList)
-
-    invvList = mergeInvList(invList)
-
-    print(invvList)
-
-    # deltaEncode(invertedIndex)
+    # invList.sort(key=takeFirst)
     #
-    # writeEncodedFile(invertedIndex)
+    # invvList = mergeInvList(invList)
 
-    # writeFiles(termsIDs, docsIDs)
+    # ========================  INVERTED INDEX WITH HASH MAP ======================
+
+    deltaEncode(invertedIndex)
+
+    writeEncodedFile(invertedIndex)
+
+    writeFiles(termsIDs, docsIDs)
 
     # =================== SEARCH IN INVERTED INDEX ==================
-    # try:
-    #     if sys.argv[2] == "--term":
-    #         try:
-    #             searchInHashMap(termsIDs, invertedIndex, sys.argv[3])
-    #         except:
-    #             exit()
-    # except:
-    #     exit()
+    try:
+        if sys.argv[2] == "--term":
+            try:
+                searchInHashMap(termsIDs, invertedIndex, sys.argv[3])
+            except:
+                exit()
+    except:
+        exit()
