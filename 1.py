@@ -53,6 +53,21 @@ def searchInHashMap(listo, invlisto, term):
             print("Term frequency in corpus: " + str(tempoList[0]))
 
 
+def mergeInvList(listo):
+    retList = []
+    prevTermId = listo[0][0]
+    retList.append(prevTermId)
+    retList[prevTermId] = [(listo[0][1], listo[0][2])]
+    for tupleo in listo:
+        if tupleo[0] == prevTermId:
+            retList[prevTermId].append((tupleo[1], tupleo[2]))
+        else:
+            prevTermId = tupleo[0]
+            retList.append(prevTermId)
+            retList[prevTermId] = [(tupleo[1], tupleo[2])]
+    return retList
+
+
 def removePunctuations(completeList):
     returnList = []
     for i in range(len(words)):
@@ -173,23 +188,24 @@ if __name__ == "__main__":
 
             # =============== WITH HASH-MAP ==============
 
-            if word not in termsIDs:
-                termsIDs[word] = termCounter
-                invertedIndex[termCounter] = [1, 0, (docCounter, termPositionCounter)]
-                termCounter += 1
-            else:
-                tempList = invertedIndex[termsIDs[word]]
-                tempList[0] += 1
-                tempList.append((docCounter, termPositionCounter))
+            # if word not in termsIDs:
+            #     termsIDs[word] = termCounter
+            #     invertedIndex[termCounter] = [1, 0, (docCounter, termPositionCounter)]
+            #     termCounter += 1
+            # else:
+            #     tempList = invertedIndex[termsIDs[word]]
+            #     tempList[0] += 1
+            #     tempList.append((docCounter, termPositionCounter))
 
             # =================== WITHOUT HASH-MAP ===================
 
-            # if termCounter not in termIDss:
-            #     termIDss.append(termCounter)
-            #     invList.append((termCounter, docCounter, termPositionCounter))
-            #     termCounter += 1
-            # else:
-            #     invList.append((termsIDs[word], docCounter, termPositionCounter))
+            if word not in termIDss:
+                termIDss.append(word)
+                invList.append((termCounter, docCounter, termPositionCounter))
+                termCounter += 1
+            else:
+                invList.append((termIDss.index(word), docCounter, termPositionCounter))
+
 
             termPositionCounter += 1
 
@@ -197,11 +213,13 @@ if __name__ == "__main__":
         if docCounter == 20:
             break
 
-    # print(invList)
-    #
-    # invList.sort(key=takeFirst)
-    #
-    # print(invList)
+    invList.sort(key=takeFirst)
+
+    print(invList)
+
+    invvList = mergeInvList(invList)
+
+    print(invvList)
 
     # deltaEncode(invertedIndex)
     #
@@ -209,11 +227,12 @@ if __name__ == "__main__":
 
     # writeFiles(termsIDs, docsIDs)
 
-    try:
-        if sys.argv[2] == "--term":
-            try:
-                searchInHashMap(termsIDs, invertedIndex, sys.argv[3])
-            except:
-                exit()
-    except:
-        exit()
+    # =================== SEARCH IN INVERTED INDEX ==================
+    # try:
+    #     if sys.argv[2] == "--term":
+    #         try:
+    #             searchInHashMap(termsIDs, invertedIndex, sys.argv[3])
+    #         except:
+    #             exit()
+    # except:
+    #     exit()
