@@ -7,6 +7,14 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 
 
+def takeFirst(elem):
+    return elem[0]
+
+
+def takeThird(elem):
+    return elem[2]
+
+
 def parseText(dirName, fileName):
     # READING FILE
     soup = BeautifulSoup(open('./' + dirName + '/' + fileName, encoding="utf8", errors='ignore'), 'html.parser')
@@ -32,6 +40,17 @@ def parseText(dirName, fileName):
 
     # RETURN LOWER-CASE TEXT
     return text.lower()
+
+
+def searchInHashMap(listo, invlisto, term):
+    if term in listo:
+        termID = listo[term]
+        if termID in invlisto:
+            tempoList = invlisto[termID]
+            print("Listing for term: " + term)
+            print("TERMID: " + str(termID))
+            print("Number of documents containing term: " + str(tempoList[1]))
+            print("Term frequency in corpus: " + str(tempoList[0]))
 
 
 def removePunctuations(completeList):
@@ -79,7 +98,7 @@ def stemText(tokenizedList):
 
 
 def writeEncodedFile(invertedList):
-    invFile = open("term_index.txt", "w+", encoding="utf-8")
+    invFile = open("term_index1.txt", "w+", encoding="utf-8")
     for key in invertedList:
         invFile.write(str(key) + " ")
         postingList = invertedList[key]
@@ -90,7 +109,6 @@ def writeEncodedFile(invertedList):
                 invFile.write(str(postingList[i][0]) + "," + str(postingList[i][1]) + " ")
         invFile.write("\n")
     invFile.close()
-
 
 def writeFiles(list1, list2):
 
@@ -117,8 +135,13 @@ if __name__ == "__main__":
     termsIDs = {}
     termCounter = 0
 
+    # TERM-IDs LIST
+    termIDss = []
+
     # MAIN INDEX (Dictionary)
     invertedIndex = {}
+
+    invList = []
 
     # READING STOP-LIST
     lineList = [line.rstrip('\n') for line in open('stoplist.txt')]
@@ -147,6 +170,9 @@ if __name__ == "__main__":
 
         termPositionCounter = 0
         for word in stemmedText:
+
+            # =============== WITH HASH-MAP ==============
+
             if word not in termsIDs:
                 termsIDs[word] = termCounter
                 invertedIndex[termCounter] = [1, 0, (docCounter, termPositionCounter)]
@@ -156,11 +182,38 @@ if __name__ == "__main__":
                 tempList[0] += 1
                 tempList.append((docCounter, termPositionCounter))
 
+            # =================== WITHOUT HASH-MAP ===================
+
+            # if termCounter not in termIDss:
+            #     termIDss.append(termCounter)
+            #     invList.append((termCounter, docCounter, termPositionCounter))
+            #     termCounter += 1
+            # else:
+            #     invList.append((termsIDs[word], docCounter, termPositionCounter))
+
             termPositionCounter += 1
+
         docCounter += 1
+        if docCounter == 20:
+            break
 
-    deltaEncode(invertedIndex)
+    # print(invList)
+    #
+    # invList.sort(key=takeFirst)
+    #
+    # print(invList)
 
-    writeEncodedFile(invertedIndex)
+    # deltaEncode(invertedIndex)
+    #
+    # writeEncodedFile(invertedIndex)
 
     # writeFiles(termsIDs, docsIDs)
+
+    try:
+        if sys.argv[2] == "--term":
+            try:
+                searchInHashMap(termsIDs, invertedIndex, sys.argv[3])
+            except:
+                exit()
+    except:
+        exit()
